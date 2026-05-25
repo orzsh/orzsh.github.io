@@ -19,6 +19,6 @@ jobs:
       - name: Build and Deploy
         uses: theme-keep/hexo-deploy-github-pages-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISH_REPOSITORY: orzsh/orzsh.github.io
           BRANCH: gh-pages
