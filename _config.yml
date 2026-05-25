@@ -103,6 +103,11 @@ ignore:
 ## Themes: https://hexo.io/themes/
 theme: keep
 
+# Mermaid diagrams
+mermaid:
+  enable: true
+  version: 10.5.0
+
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
