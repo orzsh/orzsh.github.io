@@ -264,7 +264,7 @@
             
                 <span class="meta-info-item post-update-date">
                     <i class="icon fa-solid fa-file-pen"></i>&nbsp;
-                    <span class="datetime" data-updated="Mon May 25 2026 15:17:02 GMT+0000">2026-05-25 23:17:02</span>
+                    <span class="datetime" data-updated="Mon May 25 2026 15:29:57 GMT+0000">2026-05-25 23:29:57</span>
                 </span>
             
         
@@ -294,7 +294,7 @@
         
         
             <span class="meta-info-item post-wordcount">
-                <i class="icon fas fa-file-word"></i>&nbsp;<span>335 字</span>
+                <i class="icon fas fa-file-word"></i>&nbsp;<span>285 字</span>
             </span>
         
         
@@ -322,9 +322,70 @@
 
                     
                          <p>当你在写数据库、文件系统或网络这类“重资源”代码时，最怕两件事：一是频繁创建&#x2F;销毁带来的性能抖动，二是资源忘记释放导致的各种诡异事故。更靠谱的做法是把资源复用起来，用**对象池（Object Pool）<strong>兜住；同时把“复用还是新建”的决定权，集中在一个统一入口里。这就是</strong>工厂方法（Factory Method）**能派上用场的地方。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">classDiagram  </span><br><span class="line">    class Client  </span><br><span class="line"></span><br><span class="line">    class ConnectionPool &#123;  </span><br><span class="line">      - maxSize : size_t  </span><br><span class="line">      - idle : deque&lt;DatabaseConnection*&gt;  </span><br><span class="line">      - mtx : mutex  </span><br><span class="line">      - cv : condition_variable  </span><br><span class="line">      - total : size_t  </span><br><span class="line">      - inUse : size_t  </span><br><span class="line">      - seq : size_t  </span><br><span class="line">      + acquire(timeout: milliseconds) ConnectionHandle  </span><br><span class="line">      + release(c: DatabaseConnection*) void  </span><br><span class="line">      + shutdown() void  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">    class ConnectionHandle &#123;  </span><br><span class="line">      - pool : ConnectionPool*  </span><br><span class="line">      - conn : DatabaseConnection*  </span><br><span class="line">      + operator-&gt;() DatabaseConnection*  </span><br><span class="line">      + ~ConnectionHandle()  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">    class DatabaseConnection &#123;  </span><br><span class="line">      - id : string  </span><br><span class="line">      + DatabaseConnection(id: string)  </span><br><span class="line">      + ~DatabaseConnection()  </span><br><span class="line">      + execute(sql: string) void  </span><br><span class="line">      + reset() void  </span><br><span class="line">      + isAlive() bool  </span><br><span class="line">    &#125;  </span><br><span class="line"></span><br><span class="line">    Client ..&gt; ConnectionPool : acquire()  </span><br><span class="line">    ConnectionPool &quot;1&quot; o--&gt; &quot;0..*&quot; DatabaseConnection : manages  </span><br><span class="line">    ConnectionHandle &quot;1&quot; *-- &quot;1&quot; DatabaseConnection : holds  </span><br><span class="line">    ConnectionHandle --&gt; ConnectionPool : return on destructor  </span><br></pre></td></tr></table></figure>
+<pre class="mermaid">classDiagram  
+    class Client  
 
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram  </span><br><span class="line">    title Acquire and Return  </span><br><span class="line"></span><br><span class="line">    actor Client  </span><br><span class="line">    participant Pool as ConnectionPool  </span><br><span class="line">    participant Conn as DatabaseConnection  </span><br><span class="line">    participant Handle as ConnectionHandle  </span><br><span class="line"></span><br><span class="line">    Client-&gt;&gt;Pool: acquire(timeout)  </span><br><span class="line">    alt idle not empty  </span><br><span class="line">        Pool-&gt;&gt;Pool: pop idle  </span><br><span class="line">    else under max limit  </span><br><span class="line">        Pool-&gt;&gt;Pool: ++total / ++seq  </span><br><span class="line">        Pool-&gt;&gt;Conn: new DatabaseConnection(&quot;conn_seq&quot;)  </span><br><span class="line">    else limit reached  </span><br><span class="line">        Pool-&gt;&gt;Pool: wait or timeout  </span><br><span class="line">    end  </span><br><span class="line">    Pool-&gt;&gt;Conn: reset() / isAlive()  </span><br><span class="line">    Pool-&gt;&gt;Handle: construct(pool, conn)  </span><br><span class="line">    Pool--&gt;&gt;Client: return Handle  </span><br><span class="line"></span><br><span class="line">    Client-&gt;&gt;Handle: operator-&gt;()-&gt;execute(sql)  </span><br><span class="line"></span><br><span class="line">    Note over Client,Handle: RAII -&gt; on destruction  </span><br><span class="line">    Client-&gt;&gt;Handle: ~ConnectionHandle()  </span><br><span class="line">    Handle-&gt;&gt;Pool: release(conn)  </span><br><span class="line">    Pool-&gt;&gt;Pool: push idle, notify_one</span><br></pre></td></tr></table></figure>
+    class ConnectionPool {  
+      - maxSize : size_t  
+      - idle : deque<DatabaseConnection*>  
+      - mtx : mutex  
+      - cv : condition_variable  
+      - total : size_t  
+      - inUse : size_t  
+      - seq : size_t  
+      + acquire(timeout: milliseconds) ConnectionHandle  
+      + release(c: DatabaseConnection*) void  
+      + shutdown() void  
+    }  
+
+    class ConnectionHandle {  
+      - pool : ConnectionPool*  
+      - conn : DatabaseConnection*  
+      + operator->() DatabaseConnection*  
+      + ~ConnectionHandle()  
+    }  
+
+    class DatabaseConnection {  
+      - id : string  
+      + DatabaseConnection(id: string)  
+      + ~DatabaseConnection()  
+      + execute(sql: string) void  
+      + reset() void  
+      + isAlive() bool  
+    }  
+
+    Client ..> ConnectionPool : acquire()  
+    ConnectionPool "1" o--> "0..*" DatabaseConnection : manages  
+    ConnectionHandle "1" *-- "1" DatabaseConnection : holds  
+    ConnectionHandle --> ConnectionPool : return on destructor</pre>
+
+<pre class="mermaid">sequenceDiagram  
+    title Acquire and Return  
+
+    actor Client  
+    participant Pool as ConnectionPool  
+    participant Conn as DatabaseConnection  
+    participant Handle as ConnectionHandle  
+
+    Client->>Pool: acquire(timeout)  
+    alt idle not empty  
+        Pool->>Pool: pop idle  
+    else under max limit  
+        Pool->>Pool: ++total / ++seq  
+        Pool->>Conn: new DatabaseConnection("conn_seq")  
+    else limit reached  
+        Pool->>Pool: wait or timeout  
+    end  
+    Pool->>Conn: reset() / isAlive()  
+    Pool->>Handle: construct(pool, conn)  
+    Pool-->>Client: return Handle  
+
+    Client->>Handle: operator->()->execute(sql)  
+
+    Note over Client,Handle: RAII -> on destruction  
+    Client->>Handle: ~ConnectionHandle()  
+    Handle->>Pool: release(conn)  
+    Pool->>Pool: push idle, notify_one</pre>
 
 
                     
@@ -754,6 +815,19 @@
 </div>
 
 <!-- mermaid -->
+
+    
+<script src="//cdn.jsdelivr.net/npm/mermaid@10.5.0/dist/mermaid.min.js"></script>
+
+    <script data-pjax>
+      if (window.mermaid) {
+        mermaid.init()
+      }
+    </script>
+
+
+
+
 
 
 <!-- pjax -->
